@@ -31,9 +31,41 @@ function textFarbe([r, g, b]) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 140 ? '#0e0e12' : '#f4f6fa';
 }
 
+// Leucht-Variante der offiziellen Linienfarbe fuer die Spuren: mehr
+// Saettigung, Mindesthelligkeit angehoben, sonst saufen dunkle Farben
+// (S7-Navy) auf der dunklen Karte ab. Legende/Doku behalten die Originale.
+function leuchtFarbe([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  const d = max - min;
+  if (d > 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = (((g - b) / d) % 6 + 6) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  s = Math.min(1, s * 1.4);
+  l = Math.max(l, 0.55);
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r2, g2, b2] =
+    h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [Math.round((r2 + m) * 255), Math.round((g2 + m) * 255), Math.round((b2 + m) * 255)];
+}
+
 export function starteReplay(map, daten) {
   const farben = Object.fromEntries(
     Object.entries(daten.linien).map(([linie, info]) => [linie, hexZuRgb(info.farbe)])
+  );
+  const spurFarben = Object.fromEntries(
+    Object.entries(farben).map(([linie, rgb]) => [linie, leuchtFarbe(rgb)])
   );
   const aktiveLinien = new Set(Object.keys(daten.linien));
 
@@ -72,7 +104,7 @@ export function starteReplay(map, daten) {
       return {
         ...fahrtZuTrip(f, daten.shapes, SPUR_TOLERANZ_GRAD),
         linie: f.linie,
-        farbe: farben[f.linie],
+        farbe: spurFarben[f.linie],
         start: halte[0].an,
         ende: halte[halte.length - 1].an,
       };
@@ -177,7 +209,7 @@ export function starteReplay(map, daten) {
           widthMinPixels: 3,
           capRounded: true,
           jointRounded: true,
-          opacity: 0.7,
+          opacity: 1.0,
         }),
         new ScatterplotLayer({
           id: 'zuege-punkte',
