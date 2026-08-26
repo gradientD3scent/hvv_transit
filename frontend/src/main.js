@@ -3,6 +3,9 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 import { starteReplay } from './replay.js';
 
+// unter GitHub Pages liegt die App unter /hvv_transit/, lokal unter /
+const BASIS = import.meta.env.BASE_URL;
+
 const map = new MaplibreMap({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -19,14 +22,14 @@ const map = new MaplibreMap({
 map.addControl(new NavigationControl(), 'top-right');
 
 async function ladeReplay() {
-  const daten = await (await fetch('/geo/mehrtagesdatensatz.json')).json();
+  const daten = await (await fetch(`${BASIS}geo/mehrtagesdatensatz.json`)).json();
   starteReplay(map, daten);
 }
 
 map.on('load', () => {
   map.addSource('bezirke', {
     type: 'geojson',
-    data: '/geo/bezirke.geojson',
+    data: `${BASIS}geo/bezirke.geojson`,
   });
 
   // vor dem ersten Symbol-Layer einfuegen, damit Ortsnamen lesbar bleiben
@@ -48,7 +51,7 @@ map.on('load', () => {
 
   map.addSource('liniennetz', {
     type: 'geojson',
-    data: '/geo/liniennetz.geojson',
+    data: `${BASIS}geo/liniennetz.geojson`,
   });
 
   map.addLayer(
@@ -73,7 +76,7 @@ map.on('load', () => {
 
   map.addSource('stationen', {
     type: 'geojson',
-    data: '/geo/stationen.geojson',
+    data: `${BASIS}geo/stationen.geojson`,
   });
 
   map.addLayer(
