@@ -11,6 +11,11 @@
       <div id="uhr-zeit"></div>
       <div id="uhr-fahrt"></div>
     </div>
+    <div id="steuerung" hidden>
+      <button id="playpause" title="Play/Pause">⏸</button>
+      <input id="zeitregler" type="range" min="0" max="86400" step="10" value="0" />
+      <span id="tempo-stufen"></span>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
