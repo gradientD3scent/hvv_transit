@@ -7,6 +7,12 @@ const map = new MaplibreMap({
   style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   center: [9.99, 53.55],
   zoom: 10.5,
+  attributionControl: {
+    customAttribution: [
+      'Fahrplandaten: HVV via Transparenzportal Hamburg (CC BY 4.0)',
+      'Verwaltungsgrenzen: FHH, Landesbetrieb Geoinformation und Vermessung (dl-de/by-2-0)',
+    ],
+  },
 });
 
 map.addControl(new NavigationControl(), 'top-right');
@@ -29,6 +35,26 @@ map.on('load', () => {
         'line-color': '#56606f',
         'line-width': 1,
         'line-opacity': 0.45,
+      },
+    },
+    firstSymbolId
+  );
+
+  map.addSource('stationen', {
+    type: 'geojson',
+    data: '/geo/stationen.geojson',
+  });
+
+  map.addLayer(
+    {
+      id: 'stationen-punkte',
+      type: 'circle',
+      source: 'stationen',
+      paint: {
+        // Radius waechst mit dem Zoom, sonst verklumpen die Punkte im Zentrum
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 12, 3, 14, 4.5],
+        'circle-color': '#dbe2ee',
+        'circle-opacity': 0.85,
       },
     },
     firstSymbolId
