@@ -23,6 +23,10 @@ data/
 .env
 .env.*
 
+# Lokale Arbeitsdokumente (enthalten Klarnamen, bleiben privat)
+CLAUDE.md
+docs/projekt-brief-hvv-replay.md
+
 # OS
 Thumbs.db
 .DS_Store
