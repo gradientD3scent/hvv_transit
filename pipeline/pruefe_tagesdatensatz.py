@@ -26,12 +26,33 @@ def pruefe(pfad: Path) -> int:
     daten = json.loads(pfad.read_text(encoding="utf-8"))
     fehler = []
     warnungen = []
+    v2 = daten["meta"].get("version") == 2
 
-    for pflicht in ("betriebstag", "quelle", "erzeugt"):
+    for pflicht in (("zeitraum",) if v2 else ("betriebstag",)) + ("quelle", "erzeugt"):
         if pflicht not in daten["meta"]:
             fehler.append(f"meta.{pflicht} fehlt")
     if "CC BY" not in daten["meta"].get("quelle", ""):
         fehler.append("meta.quelle ohne CC-BY-Attribution")
+
+    if v2:
+        # Kalenderblock: jeder Tag nicht leer, alle Service-Indizes gueltig
+        anzahl_services = len(daten["services"])
+        for datum, service_idx in daten["tage"].items():
+            if not service_idx:
+                fehler.append(f"Tag {datum} ohne Services")
+            if any(not 0 <= i < anzahl_services for i in service_idx):
+                fehler.append(f"Tag {datum}: ungueltiger Service-Index")
+        # v2-Halte ([station, an, ab, m]) fuer die Invarianten normalisieren
+        anzahl_stationen = len(daten["stationen"])
+        for f in daten["fahrten"]:
+            if not 0 <= f["s"] < anzahl_services:
+                fehler.append(f"Fahrt {f['id']}: ungueltiger Service-Index")
+            if any(not 0 <= h[0] < anzahl_stationen for h in f["halte"]):
+                fehler.append(f"Fahrt {f['id']}: ungueltiger Stations-Index")
+            f["halte"] = [
+                {"name": daten["stationen"][s], "an": an, "ab": ab, "m": m}
+                for s, an, ab, m in f["halte"]
+            ]
 
     for sid, shape in daten["shapes"].items():
         if len(shape["coords"]) != len(shape["meter"]):
@@ -87,7 +108,9 @@ def pruefe(pfad: Path) -> int:
         s = t + 4 * 3600
         return f"{s // 3600:02d}:{s % 3600 // 60:02d}"
 
-    print(f"Betriebstag {daten['meta']['betriebstag']}: {len(daten['fahrten'])} Fahrten, "
+    kopf = (f"{daten['meta']['zeitraum'][0]} bis {daten['meta']['zeitraum'][1]}, {len(daten['tage'])} Betriebstage"
+            if v2 else f"Betriebstag {daten['meta']['betriebstag']}")
+    print(f"{kopf}: {len(daten['fahrten'])} Fahrten, "
           f"{len(daten['shapes'])} Shapes, {len(daten['linien'])} Linien")
     print("je Linie:", ", ".join(f"{l} {n}" for l, n in sorted(je_linie.items())))
     print(f"Zeitspanne {uhr(min(zeiten))} bis {uhr(max(zeiten))}, "
