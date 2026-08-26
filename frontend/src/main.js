@@ -61,10 +61,11 @@ map.on('load', () => {
         'line-cap': 'round',
       },
       paint: {
-        // Farbe kommt aus den Feature-Properties (von der Pipeline gebacken)
-        'line-color': ['get', 'farbe'],
-        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 12, 2.5, 14, 4],
-        'line-opacity': 0.85,
+        // bewusst farblos: die Linienfarben kommen von den Nachleucht-Spuren
+        // der fahrenden Zuege, das statische Netz ist nur graue Grundstruktur
+        'line-color': '#4a5261',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 12, 1.8, 14, 2.5],
+        'line-opacity': 0.5,
       },
     },
     firstSymbolId
