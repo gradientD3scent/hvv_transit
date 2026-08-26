@@ -1,6 +1,10 @@
 import { Map as MaplibreMap, NavigationControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
+import { position } from './interpolation.js';
+
+const ZEITRAFFER = 60;
+const BETRIEBSTAG_BEGINN_S = 4 * 3600;
 
 const map = new MaplibreMap({
   container: 'map',
@@ -16,6 +20,63 @@ const map = new MaplibreMap({
 });
 
 map.addControl(new NavigationControl(), 'top-right');
+
+function punktFeature(coords) {
+  return { type: 'Feature', geometry: { type: 'Point', coordinates: coords }, properties: {} };
+}
+
+function formatUhrzeit(t) {
+  const s = Math.floor(t + BETRIEBSTAG_BEGINN_S) % 86400;
+  const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+
+async function starteTestfahrt() {
+  const daten = await (await fetch('/geo/testfahrt.json')).json();
+  const fahrt = daten.fahrten[0];
+  const halte = fahrt.halte;
+  const farbe = daten.linien[fahrt.linie].farbe;
+
+  // etwas Vor- und Nachlauf, damit der Zug sichtbar am Gleis steht
+  const start = halte[0].ab - 30;
+  const ende = halte[halte.length - 1].an + 30;
+
+  map.addSource('zug', {
+    type: 'geojson',
+    data: punktFeature(position(fahrt, daten.shapes, start)),
+  });
+
+  map.addLayer({
+    id: 'zug-halo',
+    type: 'circle',
+    source: 'zug',
+    paint: { 'circle-radius': 13, 'circle-color': farbe, 'circle-blur': 1, 'circle-opacity': 0.9 },
+  });
+  map.addLayer({
+    id: 'zug-kern',
+    type: 'circle',
+    source: 'zug',
+    paint: { 'circle-radius': 4, 'circle-color': '#ffffff' },
+  });
+
+  const uhr = document.getElementById('uhr');
+  const uhrZeit = document.getElementById('uhr-zeit');
+  const uhrFahrt = document.getElementById('uhr-fahrt');
+  uhrFahrt.textContent = `${fahrt.linie} ${halte[0].name} → ${halte[halte.length - 1].name} (${ZEITRAFFER}x)`;
+  uhr.hidden = false;
+
+  const t0 = performance.now();
+  function tick(jetzt) {
+    // Simulationszeit laeuft im Zeitraffer und springt am Ende zurueck zum Start
+    const t = start + (((jetzt - t0) / 1000) * ZEITRAFFER) % (ende - start);
+    map.getSource('zug').setData(punktFeature(position(fahrt, daten.shapes, t)));
+    uhrZeit.textContent = formatUhrzeit(t);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
 
 map.on('load', () => {
   map.addSource('bezirke', {
@@ -83,4 +144,6 @@ map.on('load', () => {
     },
     firstSymbolId
   );
+
+  starteTestfahrt();
 });

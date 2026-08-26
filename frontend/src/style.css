@@ -10,3 +10,24 @@ body {
   /* dunkler Grund, damit vor dem Laden der Tiles nichts weiss aufblitzt */
   background: #0e0e12;
 }
+
+#uhr {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 8px 12px;
+  background: rgba(14, 14, 18, 0.8);
+  border-radius: 6px;
+  color: #dbe2ee;
+  font-family: ui-monospace, Consolas, monospace;
+  pointer-events: none;
+}
+
+#uhr-zeit {
+  font-size: 20px;
+}
+
+#uhr-fahrt {
+  font-size: 12px;
+  opacity: 0.7;
+}
