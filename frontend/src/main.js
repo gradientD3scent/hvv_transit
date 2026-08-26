@@ -19,7 +19,7 @@ const map = new MaplibreMap({
 map.addControl(new NavigationControl(), 'top-right');
 
 async function ladeReplay() {
-  const daten = await (await fetch('/geo/tagesdatensatz.json')).json();
+  const daten = await (await fetch('/geo/mehrtagesdatensatz.json')).json();
   starteReplay(map, daten);
 }
 

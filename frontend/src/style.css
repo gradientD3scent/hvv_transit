@@ -70,3 +70,37 @@ body {
   width: min(340px, 40vw);
   accent-color: #dbe2ee;
 }
+
+#tagwahl {
+  background: #2a2f3a;
+  color: #dbe2ee;
+  border: 0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+#legende {
+  position: absolute;
+  top: 120px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(14, 14, 18, 0.8);
+  border-radius: 8px;
+}
+
+#legende button {
+  border: 0;
+  border-radius: 4px;
+  padding: 3px 0;
+  width: 38px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}

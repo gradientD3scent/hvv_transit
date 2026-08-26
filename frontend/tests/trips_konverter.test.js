@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { position } from '../src/interpolation.js';
-import { fahrtZuTrip, hexZuRgb } from '../src/trips_konverter.js';
+import { fahrtZuTrip, hexZuRgb, normalisiereFahrt } from '../src/trips_konverter.js';
 
 // lineare Interpolation zwischen den Vertex-Zeitstempeln, wie im TripsLayer
 function positionAusTrip(trip, t) {
@@ -124,4 +124,21 @@ test('vereinfachte Spur: deutlich weniger Vertices, begrenzte Abweichung', () =>
 test('hexZuRgb', () => {
   assert.deepEqual(hexZuRgb('#1C6EB4'), [28, 110, 180]);
   assert.deepEqual(hexZuRgb('#FFDD00'), [255, 221, 0]);
+});
+
+test('normalisiereFahrt: v2-Halte-Arrays werden zu benannten Objekten', () => {
+  const roh = {
+    id: '42',
+    linie: 'U1',
+    shape: '2907',
+    s: 3,
+    halte: [[1, 0, 10, 0], [0, 110, 120, 333]],
+  };
+  const f = normalisiereFahrt(roh, ['Richtweg', 'Norderstedt Mitte']);
+  assert.deepEqual(f.halte, [
+    { name: 'Norderstedt Mitte', an: 0, ab: 10, m: 0 },
+    { name: 'Richtweg', an: 110, ab: 120, m: 333 },
+  ]);
+  assert.equal(f.linie, 'U1');
+  assert.equal(f.shape, '2907');
 });

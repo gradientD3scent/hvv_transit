@@ -113,3 +113,14 @@ export function fahrtZuTrip(fahrt, shapes, toleranzGrad = 0) {
 export function hexZuRgb(hex) {
   return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 }
+
+// Schema v2 speichert Halte als kompakte Arrays [stationsIndex, an, ab, m];
+// fuer Interpolation und Konverter werden daraus wieder benannte Objekte
+export function normalisiereFahrt(fahrt, stationen) {
+  return {
+    id: fahrt.id,
+    linie: fahrt.linie,
+    shape: fahrt.shape,
+    halte: fahrt.halte.map(([s, an, ab, m]) => ({ name: stationen[s], an, ab, m })),
+  };
+}
