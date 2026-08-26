@@ -9,6 +9,12 @@ build/
 .venv/
 venv/
 
+# Node
+node_modules/
+
+# GTFS-Rohdaten und erzeugte Tagesdatensaetze (gross, siehe CLAUDE.md)
+data/
+
 # IDE
 .idea/
 .vscode/
