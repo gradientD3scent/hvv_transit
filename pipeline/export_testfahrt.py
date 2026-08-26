@@ -15,25 +15,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import duckdb
-from pyproj import Transformer
-from shapely.geometry import LineString, Point
-from shapely.ops import substring
+from gtfs_bausteine import gtfs_zeit_zu_sekunden, kumulierte_meter, snappe_halte, utm_linestring
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 FARBEN = json.loads((ROOT / "linien_farben.json").read_text(encoding="utf-8"))
 ZIEL = ROOT / "frontend" / "public" / "geo" / "testfahrt.json"
 
-BETRIEBSTAG_BEGINN_S = 4 * 3600  # 04:00, Arbeitshypothese aus dem Brief
 LINIE = "U1"
-
-WGS84_ZU_UTM = Transformer.from_crs(4326, 25832, always_xy=True)
-
-
-def gtfs_zeit_zu_sekunden(zeit: str) -> int:
-    """GTFS-Zeit (auch ueber 24:00, z.B. 25:28:00) -> Sekunden seit Betriebstagesbeginn."""
-    h, m, s = (int(teil) for teil in zeit.split(":"))
-    return h * 3600 + m * 60 + s - BETRIEBSTAG_BEGINN_S
 
 
 def lade_fahrt(con: duckdb.DuckDBPyConnection):
@@ -84,30 +73,14 @@ def main() -> None:
         ORDER BY st.stop_sequence
     """, [str(trip_id)]).fetchall()
 
-    # Shape nach UTM 32N projizieren und kumulierte Meter je Punkt berechnen
-    utm_punkte = [WGS84_ZU_UTM.transform(lon, lat) for lon, lat in shape_punkte]
-    linie_utm = LineString(utm_punkte)
-    meter = [0]
-    for (x1, y1), (x2, y2) in zip(utm_punkte, utm_punkte[1:]):
-        meter.append(meter[-1] + ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5)
+    linie_utm = utm_linestring(shape_punkte)
+    meter = kumulierte_meter(linie_utm)
+    meter_halte = snappe_halte(linie_utm, [(lon, lat) for _, _, _, lon, lat in halte_raw])
 
-    # Vorwaerts-Snapping: jeden Halt nur auf dem Streckenrest ab dem Vorgaenger suchen
-    halte = []
-    m_vorher = 0.0
-    for name, an, ab, lon, lat in halte_raw:
-        rest = substring(linie_utm, m_vorher, linie_utm.length)
-        punkt = Point(WGS84_ZU_UTM.transform(lon, lat))
-        m = m_vorher + rest.project(punkt)
-        abstand = rest.distance(punkt)
-        if abstand > 10:
-            raise SystemExit(f"Snapping-Abstand {abstand:.1f} m bei {name}, Abbruch")
-        halte.append({
-            "name": name,
-            "an": gtfs_zeit_zu_sekunden(an),
-            "ab": gtfs_zeit_zu_sekunden(ab),
-            "m": round(m),
-        })
-        m_vorher = m
+    halte = [
+        {"name": name, "an": gtfs_zeit_zu_sekunden(an), "ab": gtfs_zeit_zu_sekunden(ab), "m": round(m)}
+        for (name, an, ab, _, _), m in zip(halte_raw, meter_halte)
+    ]
 
     meter_werte = [h["m"] for h in halte]
     assert meter_werte == sorted(meter_werte), "Meter-Werte nicht aufsteigend"
