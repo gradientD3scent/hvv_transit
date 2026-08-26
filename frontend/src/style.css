@@ -1,0 +1,12 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  /* dunkler Grund, damit vor dem Laden der Tiles nichts weiss aufblitzt */
+  background: #0e0e12;
+}
