@@ -98,6 +98,8 @@ def lade_shapes(con: duckdb.DuckDBPyConnection, shape_ids: set) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", type=date.fromisoformat, default=date(2026, 9, 16))
+    parser.add_argument("--frontend", action="store_true",
+                        help="zusaetzlich nach frontend/public/geo/tagesdatensatz.json schreiben")
     args = parser.parse_args()
 
     con = duckdb.connect()
@@ -174,7 +176,12 @@ def main() -> None:
     }
 
     ziel = DATA / f"tagesdatensatz_{args.tag.isoformat()}.json"
-    ziel.write_text(json.dumps(datensatz, ensure_ascii=False), encoding="utf-8")
+    inhalt = json.dumps(datensatz, ensure_ascii=False)
+    ziel.write_text(inhalt, encoding="utf-8")
+    if args.frontend:
+        fe_ziel = ROOT / "frontend" / "public" / "geo" / "tagesdatensatz.json"
+        fe_ziel.write_text(inhalt, encoding="utf-8")
+        print(f"-> {fe_ziel.relative_to(ROOT)}")
 
     # Betriebstagesgrenzen-Check (offene Entscheidung aus dem Brief):
     # Wenn Nachtfahrten konsequent als ueber-24:00-Zeiten am Vortag codiert sind,
