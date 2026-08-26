@@ -10,3 +10,27 @@ const map = new MaplibreMap({
 });
 
 map.addControl(new NavigationControl(), 'top-right');
+
+map.on('load', () => {
+  map.addSource('bezirke', {
+    type: 'geojson',
+    data: '/geo/bezirke.geojson',
+  });
+
+  // vor dem ersten Symbol-Layer einfuegen, damit Ortsnamen lesbar bleiben
+  const firstSymbolId = map.getStyle().layers.find((l) => l.type === 'symbol')?.id;
+
+  map.addLayer(
+    {
+      id: 'bezirke-grenzen',
+      type: 'line',
+      source: 'bezirke',
+      paint: {
+        'line-color': '#56606f',
+        'line-width': 1,
+        'line-opacity': 0.45,
+      },
+    },
+    firstSymbolId
+  );
+});
