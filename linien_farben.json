@@ -1,0 +1,11 @@
+{
+  "U1": { "farbe": "#1C6EB4", "typ": "u" },
+  "U2": { "farbe": "#E2001A", "typ": "u" },
+  "U3": { "farbe": "#FFDD00", "typ": "u" },
+  "U4": { "farbe": "#0098A1", "typ": "u" },
+  "S1": { "farbe": "#00933B", "typ": "s" },
+  "S2": { "farbe": "#B51143", "typ": "s" },
+  "S3": { "farbe": "#622181", "typ": "s" },
+  "S5": { "farbe": "#008DA8", "typ": "s" },
+  "S7": { "farbe": "#1A2E6E", "typ": "s" }
+}

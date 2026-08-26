@@ -40,6 +40,30 @@ map.on('load', () => {
     firstSymbolId
   );
 
+  map.addSource('liniennetz', {
+    type: 'geojson',
+    data: '/geo/liniennetz.geojson',
+  });
+
+  map.addLayer(
+    {
+      id: 'liniennetz-linien',
+      type: 'line',
+      source: 'liniennetz',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        // Farbe kommt aus den Feature-Properties (von der Pipeline gebacken)
+        'line-color': ['get', 'farbe'],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 12, 2.5, 14, 4],
+        'line-opacity': 0.85,
+      },
+    },
+    firstSymbolId
+  );
+
   map.addSource('stationen', {
     type: 'geojson',
     data: '/geo/stationen.geojson',
