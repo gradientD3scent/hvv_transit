@@ -86,6 +86,41 @@ test('echte Testfahrt: äquivalent zu position() über die ganze Fahrt', () => {
   }
 });
 
+test('vereinfachte Spur: deutlich weniger Vertices, begrenzte Abweichung', () => {
+  const pfad = fileURLToPath(new URL('../public/geo/testfahrt.json', import.meta.url));
+  const daten = JSON.parse(readFileSync(pfad, 'utf8'));
+  const fahrt = daten.fahrten[0];
+
+  const exakt = fahrtZuTrip(fahrt, daten.shapes);
+  const vereinfacht = fahrtZuTrip(fahrt, daten.shapes, 0.0001);
+
+  assert.ok(
+    vereinfacht.path.length < exakt.path.length / 3,
+    `nur ${exakt.path.length} -> ${vereinfacht.path.length} Vertices`
+  );
+
+  // Abweichung zur exakten Position bleibt im Rahmen der Toleranz (~11 m
+  // quer plus Zeit-Linearisierung, grosszuegig 0.0004 Grad ~ 33 m)
+  const skala = Math.cos((53.6 * Math.PI) / 180);
+  const start = fahrt.halte[0].an;
+  const ende = fahrt.halte[fahrt.halte.length - 1].an;
+  for (let t = start; t <= ende; t += 10) {
+    const [lonA, latA] = position(fahrt, daten.shapes, t);
+    const [lonB, latB] = positionAusTrip(vereinfacht, t);
+    const d = Math.hypot((lonA - lonB) * skala, latA - latB);
+    assert.ok(d < 0.0004, `Abweichung ${d} Grad bei t=${t}`);
+  }
+
+  // Haltezeiten bleiben Stillstand: Position bei an und ab identisch
+  for (const h of fahrt.halte) {
+    if (h.ab > h.an) {
+      const [lonAn, latAn] = positionAusTrip(vereinfacht, h.an);
+      const [lonAb, latAb] = positionAusTrip(vereinfacht, h.ab);
+      assert.ok(Math.abs(lonAn - lonAb) < 1e-12 && Math.abs(latAn - latAb) < 1e-12, h.name);
+    }
+  }
+});
+
 test('hexZuRgb', () => {
   assert.deepEqual(hexZuRgb('#1C6EB4'), [28, 110, 180]);
   assert.deepEqual(hexZuRgb('#FFDD00'), [255, 221, 0]);

@@ -12,6 +12,10 @@ import { fahrtZuTrip, hexZuRgb } from './trips_konverter.js';
 const BETRIEBSTAG_BEGINN_S = 4 * 3600;
 const TEMPO_STUFEN = [60, 120, 300, 600];
 const TRAIL_LAENGE_S = 120;
+// Spur-Geometrie um ~11 m vereinfacht (nur Optik, Kopfpunkte bleiben exakt)
+const SPUR_TOLERANZ_GRAD = 0.0001;
+// nur Fahrten eines gleitenden Zeitfensters liegen im GPU-Buffer
+const FENSTER_S = 1800;
 
 function formatUhrzeit(t) {
   const s = ((Math.floor(t) + BETRIEBSTAG_BEGINN_S) % 86400 + 86400) % 86400;
@@ -25,10 +29,30 @@ export function starteReplay(map, daten) {
   const farben = Object.fromEntries(
     Object.entries(daten.linien).map(([linie, info]) => [linie, hexZuRgb(info.farbe)])
   );
-  const trips = daten.fahrten.map((f) => ({ ...fahrtZuTrip(f, daten.shapes), farbe: farben[f.linie] }));
+  const trips = daten.fahrten.map((f) => {
+    const trip = fahrtZuTrip(f, daten.shapes, SPUR_TOLERANZ_GRAD);
+    const halte = f.halte;
+    return { ...trip, farbe: farben[f.linie], start: halte[0].an, ende: halte[halte.length - 1].an };
+  });
+  console.log(`Replay: ${trips.length} Fahrten, ${trips.reduce((s, t) => s + t.path.length, 0)} Spur-Vertices nach Vereinfachung`);
 
   // Replay-Fenster: ab 04:00 (t=0), die 4 Ausreisser-Fahrten davor laufen aus dem Bild
   const tMax = Math.max(...daten.fahrten.map((f) => f.halte[f.halte.length - 1].an));
+
+  // gleitendes Zeitfenster: nur Fahrten, die das Fenster beruehren, gehen
+  // an den TripsLayer, damit der GPU-Buffer klein bleibt
+  let fensterStart = Number.NEGATIVE_INFINITY;
+  let fensterTrips = [];
+  function tripsImFenster(t) {
+    const start = Math.floor(t / FENSTER_S) * FENSTER_S;
+    if (start !== fensterStart) {
+      fensterStart = start;
+      fensterTrips = trips.filter(
+        (tr) => tr.ende >= start - TRAIL_LAENGE_S && tr.start <= start + FENSTER_S
+      );
+    }
+    return fensterTrips;
+  }
 
   const overlay = new MapboxOverlay({ layers: [] });
   map.addControl(overlay);
@@ -74,7 +98,7 @@ export function starteReplay(map, daten) {
       layers: [
         new TripsLayer({
           id: 'zuege-spur',
-          data: trips,
+          data: tripsImFenster(t),
           getPath: (d) => d.path,
           getTimestamps: (d) => d.timestamps,
           getColor: (d) => d.farbe,
