@@ -1,7 +1,11 @@
+import { TripsLayer } from '@deck.gl/geo-layers';
+import { ScatterplotLayer } from '@deck.gl/layers';
+import { MapboxOverlay } from '@deck.gl/mapbox';
 import { Map as MaplibreMap, NavigationControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 import { position } from './interpolation.js';
+import { fahrtZuTrip, hexZuRgb } from './trips_konverter.js';
 
 const ZEITRAFFER = 60;
 const BETRIEBSTAG_BEGINN_S = 4 * 3600;
@@ -21,10 +25,6 @@ const map = new MaplibreMap({
 
 map.addControl(new NavigationControl(), 'top-right');
 
-function punktFeature(coords) {
-  return { type: 'Feature', geometry: { type: 'Point', coordinates: coords }, properties: {} };
-}
-
 function formatUhrzeit(t) {
   const s = Math.floor(t + BETRIEBSTAG_BEGINN_S) % 86400;
   const hh = String(Math.floor(s / 3600)).padStart(2, '0');
@@ -37,29 +37,14 @@ async function starteTestfahrt() {
   const daten = await (await fetch('/geo/testfahrt.json')).json();
   const fahrt = daten.fahrten[0];
   const halte = fahrt.halte;
-  const farbe = daten.linien[fahrt.linie].farbe;
+  const trip = { ...fahrtZuTrip(fahrt, daten.shapes), farbe: hexZuRgb(daten.linien[fahrt.linie].farbe) };
 
   // etwas Vor- und Nachlauf, damit der Zug sichtbar am Gleis steht
-  const start = halte[0].ab - 30;
+  const start = halte[0].an - 30;
   const ende = halte[halte.length - 1].an + 30;
 
-  map.addSource('zug', {
-    type: 'geojson',
-    data: punktFeature(position(fahrt, daten.shapes, start)),
-  });
-
-  map.addLayer({
-    id: 'zug-halo',
-    type: 'circle',
-    source: 'zug',
-    paint: { 'circle-radius': 13, 'circle-color': farbe, 'circle-blur': 1, 'circle-opacity': 0.9 },
-  });
-  map.addLayer({
-    id: 'zug-kern',
-    type: 'circle',
-    source: 'zug',
-    paint: { 'circle-radius': 4, 'circle-color': '#ffffff' },
-  });
+  const overlay = new MapboxOverlay({ layers: [] });
+  map.addControl(overlay);
 
   const uhr = document.getElementById('uhr');
   const uhrZeit = document.getElementById('uhr-zeit');
@@ -71,7 +56,33 @@ async function starteTestfahrt() {
   function tick(jetzt) {
     // Simulationszeit laeuft im Zeitraffer und springt am Ende zurueck zum Start
     const t = start + (((jetzt - t0) / 1000) * ZEITRAFFER) % (ende - start);
-    map.getSource('zug').setData(punktFeature(position(fahrt, daten.shapes, t)));
+    overlay.setProps({
+      layers: [
+        // Nachleuchtspur: GPU interpoliert zwischen den Vertex-Zeitstempeln
+        new TripsLayer({
+          id: 'zuege-spur',
+          data: [trip],
+          getPath: (d) => d.path,
+          getTimestamps: (d) => d.timestamps,
+          getColor: (d) => d.farbe,
+          currentTime: t,
+          trailLength: 180,
+          widthMinPixels: 4,
+          capRounded: true,
+          jointRounded: true,
+          opacity: 0.85,
+        }),
+        // heller Zugpunkt an der Spitze, Position aus unserer Interpolation
+        new ScatterplotLayer({
+          id: 'zuege-punkte',
+          data: [fahrt],
+          getPosition: (d) => position(d, daten.shapes, t),
+          getFillColor: [255, 255, 255],
+          radiusMinPixels: 4,
+          updateTriggers: { getPosition: t },
+        }),
+      ],
+    });
     uhrZeit.textContent = formatUhrzeit(t);
     requestAnimationFrame(tick);
   }
