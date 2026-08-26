@@ -5,10 +5,10 @@ Ausgabe:  frontend/public/geo/stationen.geojson
 Aufruf:   .venv/Scripts/python pipeline/export_stationen.py
 
 Dedup-Logik (parent_station ist im HVV-Feed fuer U-/S-Stops nicht gepflegt):
+- Events mit pickup_type = 1 UND drop_off_type = 1 sind Durchfahrts-
+  Betriebspunkte (z.B. Tarifgrenzen wie "349000"), keine Stationen: filtern
 - DHID-Stops (de:02000:16:1:2): Station = die ersten 3 ID-Segmente (IFOPT-Ebene)
-- Nummern-Stops ohne DHID (090000349000): raeumliches Clustering, Stops unter
-  100 m Abstand gelten als eine Station. Namens-Heuristiken scheitern hier,
-  weil benachbarte Stationen sich Nummern-Praefixe teilen (72900x).
+- Pseudo-Duplikate wie "Barmbek(2)" werden per Namensbasis + Distanz gemergt
 """
 
 import json
@@ -21,8 +21,6 @@ import duckdb
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 ZIEL = ROOT / "frontend" / "public" / "geo" / "stationen.geojson"
-
-CLUSTER_RADIUS_M = 100
 
 QUERY = f"""
 WITH us_routes AS (
@@ -39,6 +37,7 @@ stop_events AS (
     SELECT DISTINCT st.stop_id, tr.linie
     FROM read_csv_auto('{(DATA / "stop_times.csv").as_posix()}') st
     JOIN us_trips tr USING (trip_id)
+    WHERE NOT (COALESCE(st.pickup_type, 0) = 1 AND COALESCE(st.drop_off_type, 0) = 1)
 )
 SELECT s.stop_id, s.stop_name, s.stop_lon, s.stop_lat, list_sort(list(DISTINCT e.linie))
 FROM stop_events e
@@ -60,26 +59,9 @@ def main() -> None:
 
     # Schluessel -> Liste der Gleis-Stops (name, lon, lat, linien)
     stationen: dict[str, list] = {}
-
-    numerik = []
     for stop_id, name, lon, lat, linien in rows:
-        if stop_id.startswith("de:"):
-            kern = ":".join(stop_id.split(":")[:3])
-            stationen.setdefault(kern, []).append((name, lon, lat, linien))
-        else:
-            numerik.append((stop_id, name, lon, lat, linien))
-
-    # Nummern-Stops raeumlich clustern (greedy, bei 10 Stops unkritisch)
-    for stop_id, name, lon, lat, linien in numerik:
-        for kern, mitglieder in stationen.items():
-            if not kern.startswith("cluster:"):
-                continue
-            _, mlon, mlat, _ = mitglieder[0]
-            if distanz_m(lon, lat, mlon, mlat) < CLUSTER_RADIUS_M:
-                mitglieder.append((name, lon, lat, linien))
-                break
-        else:
-            stationen[f"cluster:{stop_id}"] = [(name, lon, lat, linien)]
+        kern = ":".join(stop_id.split(":")[:3]) if stop_id.startswith("de:") else stop_id
+        stationen.setdefault(kern, []).append((name, lon, lat, linien))
 
     features = []
     for kern, mitglieder in stationen.items():
@@ -123,9 +105,7 @@ def main() -> None:
     ZIEL.write_text(json.dumps(geojson, ensure_ascii=False), encoding="utf-8")
 
     linien = sorted({l for f in features for l in f["properties"]["linien"]})
-    cluster = sum(1 for f in features if f["properties"]["id"].startswith("cluster:"))
-    print(f"{len(features)} Stationen ({cluster} aus Nummern-Stops geclustert)")
-    print(f"Linien: {', '.join(linien)}")
+    print(f"{len(features)} Stationen, Linien: {', '.join(linien)}")
     print(f"-> {ZIEL.relative_to(ROOT)}")
 
 
