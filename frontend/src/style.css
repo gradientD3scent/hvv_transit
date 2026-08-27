@@ -115,9 +115,9 @@ body {
     bottom: 0;
     transform: none;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     border-radius: 12px 12px 0 0;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   }
 
   #legende {
@@ -151,18 +151,31 @@ body {
     min-height: 32px;
   }
 
+  /* Datum, Play/Pause und Tempo kompakt genug fuer eine gemeinsame Zeile
+     auf 390-px-Geraeten; wenn es doch nicht reicht, wrappt flex sauber */
   #tagwahl,
   #playpause,
   #tempo-stufen button {
-    min-height: 42px;
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  #tagwahl {
+    padding: 4px 5px;
+    font-size: 11px;
   }
 
   #playpause {
-    min-width: 46px;
+    min-width: 40px;
   }
 
   #tempo-stufen {
     margin-left: auto;
+    gap: 4px;
+  }
+
+  #tempo-stufen button {
+    padding: 0 5px;
   }
 
   #uhr {
