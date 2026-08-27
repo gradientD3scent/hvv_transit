@@ -159,10 +159,6 @@ export function starteReplay(map, daten) {
   }
 
   // Steuerungs-Events
-  const ueber = document.getElementById('ueber');
-  document.getElementById('info-knopf').addEventListener('click', () => ueber.showModal());
-  document.getElementById('ueber-schliessen').addEventListener('click', () => ueber.close());
-
   playpause.addEventListener('click', () => {
     laeuft = !laeuft;
     playpause.textContent = laeuft ? '⏸' : '▶';

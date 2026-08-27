@@ -24,6 +24,22 @@ const map = new MaplibreMap({
 
 map.addControl(new NavigationControl(), 'top-right');
 
+// About-Modal: oeffnet beim Seitenaufruf als Intro, schliesst per Knopf,
+// Escape (nativ im dialog-Element) oder Klick/Tipp neben das Modal
+const ueber = document.getElementById('ueber');
+document.getElementById('info-knopf').addEventListener('click', () => ueber.showModal());
+document.getElementById('ueber-schliessen').addEventListener('click', () => ueber.close());
+ueber.addEventListener('click', (ereignis) => {
+  // Klicks auf den Backdrop landen auf dem dialog-Element selbst,
+  // mit Koordinaten ausserhalb seiner Box
+  const r = ueber.getBoundingClientRect();
+  const imModal =
+    ereignis.clientX >= r.left && ereignis.clientX <= r.right &&
+    ereignis.clientY >= r.top && ereignis.clientY <= r.bottom;
+  if (!imModal) ueber.close();
+});
+ueber.showModal();
+
 async function ladeReplay() {
   const daten = await (await fetch(`${BASIS}geo/mehrtagesdatensatz.json`)).json();
   starteReplay(map, daten);
