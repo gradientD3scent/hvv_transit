@@ -18,12 +18,8 @@ const map = new MaplibreMap({
   style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   center: [9.99, 53.55],
   zoom: 10.5,
-  attributionControl: {
-    customAttribution: [
-      'Fahrplandaten: HVV via Transparenzportal Hamburg (CC BY 4.0)',
-      'Verwaltungsgrenzen: FHH, Landesbetrieb Geoinformation und Vermessung (dl-de/by-2-0)',
-    ],
-  },
+  // Basemap-Attribution (Carto/OSM) muss auf der Karte sichtbar bleiben,
+  // die ausfuehrlichen Datenquellen stehen im About-Modal
 });
 
 map.addControl(new NavigationControl(), 'top-right');

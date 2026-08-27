@@ -17,7 +17,34 @@
       <button id="playpause" title="Play/Pause">⏸</button>
       <input id="zeitregler" type="range" min="0" max="86400" step="10" value="0" />
       <span id="tempo-stufen"></span>
+      <button id="info-knopf" title="Über dieses Projekt">Info</button>
     </div>
+    <dialog id="ueber">
+      <h2>HVV Tagesreplay</h2>
+      <p>
+        Ein kompletter Betriebstag des Hamburger U- und S-Bahn-Netzes im Zeitraffer:
+        echte Fahrplandaten, echte Gleisgeometrien, jede Bahn ein leuchtender Punkt.
+        Die Positionen zwischen den Halten werden interpoliert, kein Livebetrieb.
+      </p>
+      <h3>Datenquellen</h3>
+      <ul>
+        <li>
+          Fahrplandaten: HVV GTFS via
+          <a href="https://transparenz.hamburg.de" target="_blank" rel="noopener">Transparenzportal Hamburg</a>,
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+        </li>
+        <li>
+          Verwaltungsgrenzen: Freie und Hansestadt Hamburg, Landesbetrieb Geoinformation und
+          Vermessung,
+          <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>
+        </li>
+        <li>Basiskarte: &copy; CARTO, &copy; OpenStreetMap contributors</li>
+      </ul>
+      <p>
+        <a href="https://github.com/gradientD3scent/hvv_transit" target="_blank" rel="noopener">Quellcode auf GitHub</a>
+      </p>
+      <button id="ueber-schliessen">Schließen</button>
+    </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

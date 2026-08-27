@@ -35,8 +35,12 @@ body {
 #steuerung {
   position: absolute;
   bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* ohne transform zentrieren: ein transform-Elternteil wuerde das
+     position:fixed der enthaltenen Legende auf sich selbst beziehen */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: fit-content;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -69,6 +73,50 @@ body {
 #zeitregler {
   width: min(340px, 40vw);
   accent-color: #dbe2ee;
+}
+
+#ueber {
+  max-width: min(440px, 90vw);
+  padding: 20px 24px;
+  border: 1px solid #2a2f3a;
+  border-radius: 10px;
+  background: #16161c;
+  color: #dbe2ee;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#ueber::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+#ueber h2 {
+  margin: 0 0 8px;
+}
+
+#ueber h3 {
+  margin: 16px 0 4px;
+  font-size: 14px;
+}
+
+#ueber ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#ueber a {
+  color: #7fb4ff;
+}
+
+#ueber button {
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: #2a2f3a;
+  color: #dbe2ee;
+  cursor: pointer;
 }
 
 #tagwahl {
@@ -106,14 +154,12 @@ body {
   flex: 0 0 auto;
 }
 
-/* Mobil: Steuerung als vollbreite Leiste in der Daumenzone, Slider in
-   eigener Zeile, Legende als horizontale Chip-Zeile im Panel */
-@media (max-width: 640px) {
+/* Mobil und Tablet: Steuerung als vollbreite Leiste in der Daumenzone,
+   Slider in eigener Zeile, Legende als horizontale Chip-Zeile im Panel */
+@media (max-width: 1024px) {
   #steuerung {
-    left: 0;
-    right: 0;
     bottom: 0;
-    transform: none;
+    width: auto;
     flex-wrap: wrap;
     gap: 6px;
     border-radius: 12px 12px 0 0;
