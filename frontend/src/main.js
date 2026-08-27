@@ -1,7 +1,13 @@
-import { Map as MaplibreMap, NavigationControl } from 'maplibre-gl';
+import { Map as MaplibreMap, NavigationControl, setWorkerUrl } from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 import { starteReplay } from './replay.js';
+
+// MapLibre laedt seinen Tile-Worker sonst relativ zur eigenen Modul-URL,
+// was sowohl Vites Dev-Optimizer als auch der Production-Build brechen.
+// Der ?url-Import macht die Worker-Datei zum regulaeren Build-Asset.
+setWorkerUrl(workerUrl);
 
 // unter GitHub Pages liegt die App unter /hvv_transit/, lokal unter /
 const BASIS = import.meta.env.BASE_URL;
