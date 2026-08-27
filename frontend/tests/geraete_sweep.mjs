@@ -8,7 +8,7 @@
 // Ohne Argumente wird die Live-URL getestet.
 import { chromium, devices } from 'playwright';
 
-const URL = process.argv[2] ?? 'https://gradientd3scent.github.io/hvv_transit/';
+const URL = process.argv[2] ?? 'https://gradientd3scent.github.io/railflow/';
 const ORDNER = process.argv[3] ?? '.';
 
 const GERAETE = [
