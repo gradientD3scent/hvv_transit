@@ -182,15 +182,24 @@ export function starteReplay(map, daten) {
   }
 
   const tage = Object.keys(daten.tage);
+  let aktuellerTag = daten.tage[START_TAG] ? START_TAG : tage[0];
+  let hinweis = '';
+  let hinweisBis = 0;
   tagwahl.min = daten.meta.zeitraum[0];
   tagwahl.max = daten.meta.zeitraum[1];
-  tagwahl.value = daten.tage[START_TAG] ? START_TAG : tage[0];
+  tagwahl.value = aktuellerTag;
   tagwahl.addEventListener('change', () => {
+    // min/max erzwingt nicht jeder Picker: Auswahl ohne Fahrplan
+    // zuruecksetzen und kurz erklaeren statt stillschweigend ignorieren
     if (!daten.tage[tagwahl.value]) {
-      uhrFahrt.textContent = `${tagwahl.value}: keine Daten im Feed`;
+      hinweis = `${tagwahl.value || 'Datum'}: kein Fahrplan im Datensatz`;
+      hinweisBis = performance.now() + 4000;
+      tagwahl.value = aktuellerTag;
       return;
     }
-    ladeTag(tagwahl.value);
+    aktuellerTag = tagwahl.value;
+    hinweisBis = 0;
+    ladeTag(aktuellerTag);
   });
 
   function render(t) {
@@ -226,7 +235,10 @@ export function starteReplay(map, daten) {
       ],
     });
     uhrZeit.textContent = formatUhrzeit(t);
-    uhrFahrt.textContent = `${tagwahl.value} · ${aktive.length} Züge unterwegs`;
+    uhrFahrt.textContent =
+      performance.now() < hinweisBis
+        ? hinweis
+        : `${aktuellerTag} · ${aktive.length} Züge unterwegs`;
     regler.value = t;
   }
 

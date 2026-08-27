@@ -164,6 +164,9 @@ body {
     gap: 6px;
     border-radius: 12px 12px 0 0;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    /* deckend statt glasig: sonst scheinen die fahrenden Zuege durch
+       die grosse Leiste hindurch */
+    background: #101017;
   }
 
   #legende {
