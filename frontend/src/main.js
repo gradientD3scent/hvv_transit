@@ -34,6 +34,11 @@ async function ladeReplay() {
 }
 
 map.on('load', () => {
+  // Auf schmalen Screens kompaktiert MapLibre die Attribution automatisch,
+  // startet aber aufgeklappt und verdeckt dann die Steuerleiste. Initial
+  // einklappen, der Quellenvermerk bleibt uebers (i)-Symbol erreichbar.
+  document.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+
   map.addSource('bezirke', {
     type: 'geojson',
     data: `${BASIS}geo/bezirke.geojson`,
