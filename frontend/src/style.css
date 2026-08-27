@@ -13,6 +13,9 @@ body {
 
 #uhr {
   position: absolute;
+  /* UI liegt ueber den Karten-/deck.gl-Canvases, unabhaengig davon,
+     wo deck.gl seinen Container in den DOM haengt */
+  z-index: 10;
   top: 12px;
   left: 12px;
   padding: 8px 12px;
@@ -34,6 +37,7 @@ body {
 
 #steuerung {
   position: absolute;
+  z-index: 10;
   bottom: 16px;
   /* ohne transform zentrieren: ein transform-Elternteil wuerde das
      position:fixed der enthaltenen Legende auf sich selbst beziehen */
